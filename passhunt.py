@@ -11,7 +11,7 @@ import colorama
 import progressbar
 import filehunt
 
-app_version = '0.9'
+app_version = '0.9.1'
 
 
 ###################################################################################################################################
@@ -155,6 +155,7 @@ if __name__ == "__main__":
     # defaults
     search_dir = u'C:\\'
     output_file = u'passhunt_%s.html' % time.strftime("%Y-%m-%d-%H%M%S")
+    regex_string = u'password'
     excluded_directories_string = u'C:\\Windows,C:\\Program Files,C:\\Program Files (x86)'
     text_extensions_string =  u'.doc,.xls,.xml,.txt,.csv,.config,.ini,.vbs,.vbscript,.bat,.pl,.asp,.sh,.php,.inc,.conf,.inf,.reg'
     zip_extensions_string = u'.docx,.xlsx,.zip'
@@ -165,6 +166,7 @@ if __name__ == "__main__":
     # Command Line Arguments
     arg_parser = argparse.ArgumentParser(prog='passhunt', description='PassHunt v%s: search directories and sub directories for documents containing passwords.' % (app_version), formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     arg_parser.add_argument('-s', dest='search', default=search_dir, help='base directory to search in')
+    arg_parser.add_argument('-r', dest='regex', default=regex_string, help='regular expression to search for')
     arg_parser.add_argument('-x', dest='exclude', default=excluded_directories_string, help='directories to exclude from the search')
     arg_parser.add_argument('-t', dest='textfiles', default=text_extensions_string, help='text file extensions to search')
     arg_parser.add_argument('-z', dest='zipfiles', default=zip_extensions_string, help='zip file extensions to search')
@@ -177,6 +179,7 @@ if __name__ == "__main__":
     
     search_dir = unicode(args.search)
     output_file = unicode(args.outfile)
+    regex_string = unicode(args.regex)
     excluded_directories_string = unicode(args.exclude)
     text_extensions_string = unicode(args.textfiles)    
     zip_extensions_string = unicode(args.zipfiles)
@@ -194,16 +197,16 @@ if __name__ == "__main__":
     search_extensions['OTHER'] = other_extensions_string.split(',')
     # TO DO: how about network drives, other databases?
 
-    pan_regexs = {'password': re.compile('password',re.IGNORECASE)}
+    pass_regexs = {'password': re.compile(regex_string, re.IGNORECASE)}
 
     # find all files to check
     all_files = filehunt.find_all_files_in_directory(PWDFile, search_dir, excluded_directories, search_extensions)
     # TODO: search for filenames containing 'password', and encrypted zip/documents
     
     # check each file
-    total_docs, doc_pans_found = filehunt.find_all_regexs_in_files([afile for afile in all_files if not afile.errors and afile.type in ('TEXT','ZIP','SPECIAL')], pan_regexs, search_extensions, 'Pwd')
+    total_docs, doc_pans_found = filehunt.find_all_regexs_in_files([afile for afile in all_files if not afile.errors and afile.type in ('TEXT','ZIP','SPECIAL')], pass_regexs, search_extensions, 'Pwd')
     # check each pst message and attachment
-    total_psts, pst_pans_found = filehunt.find_all_regexs_in_psts([afile for afile in all_files if not afile.errors and afile.type == 'MAIL'], pan_regexs, search_extensions, 'Pwd')
+    total_psts, pst_pans_found = filehunt.find_all_regexs_in_psts([afile for afile in all_files if not afile.errors and afile.type == 'MAIL'], pass_regexs, search_extensions, 'Pwd')
 
     pans_found = doc_pans_found + pst_pans_found
 
